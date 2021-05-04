@@ -4,4 +4,8 @@ let transactionPool: Transaction[] = [];
 
 const getTransactionPool = (): Transaction[] => transactionPool;
 
-export { getTransactionPool };
+const addToTransactionPool = (tx: Transaction) => {
+  transactionPool.push(tx);
+};
+
+export { getTransactionPool, addToTransactionPool };

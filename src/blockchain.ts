@@ -1,12 +1,12 @@
 import * as CryptoJS from 'crypto-js';
-import { has } from 'lodash';
 import {
   Transaction,
   UnspentTxOut,
   updateUnspentTxOuts,
   getCoinbaseTransaction,
 } from './transaction';
-import { getTransactionPool } from './transactionPool';
+import { getTransactionPool, addToTransactionPool } from './transactionPool';
+import { createTransaction, getBalance } from './wallet';
 
 class Block {
   public index: number;
@@ -258,7 +258,7 @@ const generateRawNextBlock = (blockData: Transaction[]) => {
     difficulty
   );
   if (addBlockToChain(newBlock)) {
-    //Socket broadcast here
+    //Socket broadcast new block
     return newBlock;
   } else {
     return null;
@@ -273,4 +273,24 @@ const generateNextBlock = (publicKey: string) => {
   );
   const blockData: Transaction[] = [coinbaseTx].concat(getTransactionPool());
   return generateRawNextBlock(blockData);
+};
+
+const getAccountBalance = (publicKey: string): number => {
+  return getBalance(publicKey, getUnspentTxOuts());
+};
+
+const sendTransaction = (
+  address: string,
+  amount: number,
+  privateKey: string
+): Transaction => {
+  const tx: Transaction = createTransaction(
+    address,
+    amount,
+    privateKey,
+    getUnspentTxOuts()
+  );
+  addToTransactionPool(tx);
+  //Socket broadcast transaction pool
+  return tx;
 };

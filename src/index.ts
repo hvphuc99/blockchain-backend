@@ -1,6 +1,6 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
-import { getPublicFromWallet, initWallet } from './wallet';
+import { getPublicKey, initWallet } from './wallet';
 require('dotenv').config();
 
 const httpPort: number = parseInt(process.env.HTTP_PORT) || 3001;
@@ -19,7 +19,7 @@ const initHttpServer = (httpPort: number) => {
 
   app.post('/login', (req, res) => {
     const { privateKey } = req.body;
-    const publicKey = getPublicFromWallet(privateKey);
+    const publicKey = getPublicKey(privateKey);
     res.status(200).send({ publicKey });
   });
 
