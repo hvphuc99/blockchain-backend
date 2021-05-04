@@ -6,7 +6,7 @@ import {
   getCoinbaseTransaction,
 } from './transaction';
 import { getTransactionPool, addToTransactionPool } from './transactionPool';
-import { createTransaction, getBalance } from './wallet';
+import { createTransaction, getBalance, getPublicKey } from './wallet';
 
 class Block {
   public index: number;
@@ -36,7 +36,17 @@ class Block {
   }
 }
 
-let blockchain: Block[] = [];
+const genesisBlock: Block = new Block(
+  0,
+  [],
+  0,
+  0,
+  0,
+  '',
+  '91a73664bc84c0baa1fc75ea6e4aa6d1d20c5df664c724e3159aefc2e1186627'
+);
+
+let blockchain: Block[] = [genesisBlock];
 let unspentTxOuts: UnspentTxOut[] = [];
 
 const getBlockchain = (): Block[] => blockchain;
@@ -266,31 +276,27 @@ const generateRawNextBlock = (blockData: Transaction[]) => {
 };
 
 //Mine transactions
-const generateNextBlock = (publicKey: string) => {
+const generateNextBlock = (privateKey: string) => {
+  const publicKey: string = getPublicKey(privateKey);
+  const latestBlock = getLatestBlock();
   const coinbaseTx: Transaction = getCoinbaseTransaction(
     publicKey,
-    getLatestBlock().index + 1
+    latestBlock.index + 1
   );
   const blockData: Transaction[] = [coinbaseTx].concat(getTransactionPool());
   return generateRawNextBlock(blockData);
 };
 
-const getAccountBalance = (publicKey: string): number => {
-  return getBalance(publicKey, getUnspentTxOuts());
-};
-
+//Send transaction
 const sendTransaction = (
   address: string,
   amount: number,
   privateKey: string
 ): Transaction => {
-  const tx: Transaction = createTransaction(
-    address,
-    amount,
-    privateKey,
-    getUnspentTxOuts()
-  );
+  const tx: Transaction = createTransaction(address, amount, privateKey);
   addToTransactionPool(tx);
   //Socket broadcast transaction pool
   return tx;
 };
+
+export { getUnspentTxOuts, generateNextBlock, sendTransaction };

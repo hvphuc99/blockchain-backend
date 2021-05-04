@@ -1,6 +1,8 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
-import { getPublicKey, initWallet } from './wallet';
+import { getTransactionPool } from './transactionPool';
+import { getBalance, getPublicKey, initWallet } from './wallet';
+import { sendTransaction, generateNextBlock } from './blockchain';
 require('dotenv').config();
 
 const httpPort: number = parseInt(process.env.HTTP_PORT) || 3001;
@@ -21,6 +23,31 @@ const initHttpServer = (httpPort: number) => {
     const { privateKey } = req.body;
     const publicKey = getPublicKey(privateKey);
     res.status(200).send({ publicKey });
+  });
+
+  app.get('/getBalance', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const privateKey = authHeader.substring(7, authHeader.length);
+    res.status(200).send({ balance: getBalance(privateKey) });
+  });
+
+  app.post('/sendTransaction', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const privateKey = authHeader.substring(7, authHeader.length);
+    const { address, amount } = req.body;
+    res
+      .status(201)
+      .send({ transaction: sendTransaction(address, amount, privateKey) });
+  });
+
+  app.get('/transactionPool', (req, res) => {
+    res.status(200).send({ transactionPool: getTransactionPool() });
+  });
+
+  app.post('/mine', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const privateKey = authHeader.substring(7, authHeader.length);
+    res.status(201).send({ newBlock: generateNextBlock(privateKey) });
   });
 
   app.listen(httpPort, () => {

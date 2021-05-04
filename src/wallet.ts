@@ -10,6 +10,7 @@ import {
   findUnspentTxOut,
   toHexString,
 } from './transaction';
+import { getUnspentTxOuts } from './blockchain';
 
 const EC = new ec('secp256k1');
 
@@ -73,6 +74,7 @@ const findTxOutsForAmount = (
       return { includedUnspentTxOuts, leftOverAmount };
     }
   }
+  return { includedUnspentTxOuts, leftOverAmount: currentAmount };
 };
 
 const createTxOuts = (
@@ -129,15 +131,18 @@ const signTxIn = (
     );
     throw Error();
   }
-  const key = ec.keyFromPrivate(privateKey, 'hex');
+
+  const key = EC.keyFromPrivate(privateKey, 'hex');
   const signature: string = toHexString(key.sign(dataToSign).toDER());
 
   return signature;
 };
 
 //Get balance
-const getBalance = (address: string, unspentTxOuts: UnspentTxOut[]): number => {
-  return findUnspentTxOuts(address, unspentTxOuts)
+const getBalance = (privateKey: string): number => {
+  const publicKey = getPublicKey(privateKey);
+  const unspentTxOuts = getUnspentTxOuts();
+  return findUnspentTxOuts(publicKey, unspentTxOuts)
     .map((uTxO: UnspentTxOut) => uTxO.amount)
     .reduce((a, b) => a + b, 0);
 };
@@ -146,10 +151,10 @@ const getBalance = (address: string, unspentTxOuts: UnspentTxOut[]): number => {
 const createTransaction = (
   receiverAddress: string,
   amount: number,
-  privateKey: string,
-  unspentTxOuts: UnspentTxOut[]
+  privateKey: string
 ): Transaction => {
   const publicKey = getPublicKey(privateKey);
+  const unspentTxOuts = getUnspentTxOuts();
   const myUnspentTxOuts = unspentTxOuts.filter(
     (uTxO: UnspentTxOut) => uTxO.address === publicKey
   );
