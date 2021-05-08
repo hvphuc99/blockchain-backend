@@ -5,7 +5,11 @@ import {
   updateUnspentTxOuts,
   getCoinbaseTransaction,
 } from './transaction';
-import { getTransactionPool, addToTransactionPool } from './transactionPool';
+import {
+  getTransactionPool,
+  addToTransactionPool,
+  emptyTransactionPool,
+} from './transactionPool';
 import { createTransaction, getBalance, getPublicKey } from './wallet';
 
 class Block {
@@ -16,6 +20,7 @@ class Block {
   public nonce: number;
   public previousHash: string;
   public hash: string;
+  public miner: string;
 
   constructor(
     index: number,
@@ -24,7 +29,8 @@ class Block {
     difficulty: number,
     nonce: number,
     previousHash: string,
-    hash: string
+    hash: string,
+    miner: string
   ) {
     this.index = index;
     this.data = data;
@@ -33,6 +39,7 @@ class Block {
     this.nonce = nonce;
     this.previousHash = previousHash;
     this.hash = hash;
+    this.miner = miner;
   }
 }
 
@@ -43,7 +50,8 @@ const genesisBlock: Block = new Block(
   0,
   0,
   '',
-  '91a73664bc84c0baa1fc75ea6e4aa6d1d20c5df664c724e3159aefc2e1186627'
+  '91a73664bc84c0baa1fc75ea6e4aa6d1d20c5df664c724e3159aefc2e1186627',
+  ''
 );
 
 let blockchain: Block[] = [genesisBlock];
@@ -83,6 +91,7 @@ const getDifficulty = (): number => {
     latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 &&
     latestBlock.index !== 0
   ) {
+    return getAdjustedDifficulty();
   } else {
     return latestBlock.difficulty;
   }
@@ -226,7 +235,8 @@ const findBlock = (
   previousHash: string,
   timestamp: number,
   data: Transaction[],
-  difficulty: number
+  difficulty: number,
+  miner: string
 ): Block => {
   let nonce = 0;
   while (true) {
@@ -246,7 +256,8 @@ const findBlock = (
         difficulty,
         nonce,
         previousHash,
-        hash
+        hash,
+        miner
       );
     }
     nonce++;
@@ -254,7 +265,7 @@ const findBlock = (
 };
 
 //Create a new block with data
-const generateRawNextBlock = (blockData: Transaction[]) => {
+const generateRawNextBlock = (blockData: Transaction[], miner: string) => {
   const previousBlock: Block = getLatestBlock();
   const difficulty: number = getDifficulty();
   const nextIndex: number = previousBlock.index + 1;
@@ -265,10 +276,12 @@ const generateRawNextBlock = (blockData: Transaction[]) => {
     previousHash,
     nextTimestamp,
     blockData,
-    difficulty
+    difficulty,
+    miner
   );
   if (addBlockToChain(newBlock)) {
     //Socket broadcast new block
+    emptyTransactionPool();
     return newBlock;
   } else {
     return null;
@@ -284,7 +297,7 @@ const generateNextBlock = (privateKey: string) => {
     latestBlock.index + 1
   );
   const blockData: Transaction[] = [coinbaseTx].concat(getTransactionPool());
-  return generateRawNextBlock(blockData);
+  return generateRawNextBlock(blockData, publicKey);
 };
 
 //Send transaction
@@ -299,4 +312,4 @@ const sendTransaction = (
   return tx;
 };
 
-export { getUnspentTxOuts, generateNextBlock, sendTransaction };
+export { getUnspentTxOuts, generateNextBlock, sendTransaction, getBlockchain };
