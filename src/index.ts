@@ -2,7 +2,11 @@ import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import { getTransactionPool } from './transactionPool';
 import { getBalance, getPublicKey, initWallet } from './wallet';
-import { sendTransaction, generateNextBlock } from './blockchain';
+import {
+  sendTransaction,
+  generateNextBlock,
+  getBlockchain,
+} from './blockchain';
 require('dotenv').config();
 
 const httpPort: number = parseInt(process.env.HTTP_PORT) || 3001;
@@ -35,9 +39,12 @@ const initHttpServer = (httpPort: number) => {
     const authHeader = req.headers.authorization;
     const privateKey = authHeader.substring(7, authHeader.length);
     const { address, amount } = req.body;
-    res
-      .status(201)
-      .send({ transaction: sendTransaction(address, amount, privateKey) });
+    const tx = sendTransaction(address, amount, privateKey);
+    if (!tx) {
+      res.status(500).send({ success: false });
+    } else {
+      res.status(201).send({ success: true });
+    }
   });
 
   app.get('/transactionPool', (req, res) => {
@@ -48,6 +55,10 @@ const initHttpServer = (httpPort: number) => {
     const authHeader = req.headers.authorization;
     const privateKey = authHeader.substring(7, authHeader.length);
     res.status(201).send({ newBlock: generateNextBlock(privateKey) });
+  });
+
+  app.get('/blockchain', (req, res) => {
+    res.status(200).send({ blockchain: getBlockchain() });
   });
 
   app.listen(httpPort, () => {
