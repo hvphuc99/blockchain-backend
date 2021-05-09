@@ -9,6 +9,15 @@ import {
 } from './blockchain';
 require('dotenv').config();
 
+//Init socket
+const socketIOInit = require('socket.io')({
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+export const io = socketIOInit.listen(process.env.P2P_PORT || 3002);
+
 const httpPort: number = parseInt(process.env.HTTP_PORT) || 3001;
 const cors = require('cors');
 
@@ -67,3 +76,7 @@ const initHttpServer = (httpPort: number) => {
 };
 
 initHttpServer(httpPort);
+
+io.on('connection', (socket) => {
+  console.log(`New connection id: ${socket.id}`);
+});

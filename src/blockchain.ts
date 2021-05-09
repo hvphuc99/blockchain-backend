@@ -1,4 +1,5 @@
 import * as CryptoJS from 'crypto-js';
+import { io } from './index';
 import {
   Transaction,
   UnspentTxOut,
@@ -280,8 +281,9 @@ const generateRawNextBlock = (blockData: Transaction[], miner: string) => {
     miner
   );
   if (addBlockToChain(newBlock)) {
-    //Socket broadcast new block
     emptyTransactionPool();
+    //Socket broadcast new block
+    io.emit('newBlock', { newBlock });
     return newBlock;
   } else {
     return null;
@@ -309,6 +311,7 @@ const sendTransaction = (
   const tx: Transaction = createTransaction(address, amount, privateKey);
   addToTransactionPool(tx);
   //Socket broadcast transaction pool
+  io.emit('newTransaction', { newTransaction: tx });
   return tx;
 };
 
