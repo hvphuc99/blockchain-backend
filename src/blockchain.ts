@@ -199,27 +199,9 @@ const hasValidHash = (block: Block): boolean => {
   return true;
 };
 
-const isValidNewBlock = (newBlock: Block): boolean => {
-  const previousBlock = getLatestBlock();
-
-  if (!isValidBlockStructure(newBlock)) {
-    return false;
-  }
-  if (previousBlock.index + 1 !== newBlock.index) {
-    return false;
-  } else if (previousBlock.hash !== newBlock.previousHash) {
-    return false;
-  } else if (!isValidTimestamp(newBlock, previousBlock)) {
-    return false;
-  } else if (!hasValidHash(newBlock)) {
-    return false;
-  }
-  return true;
-};
-
 const addBlockToChain = (newBlock: Block): boolean => {
   const latestBlock = getLatestBlock();
-  if (isValidNewBlock(newBlock)) {
+  if (isValidNewBlock(newBlock, blockchain)) {
     blockchain.push(newBlock);
     const retVal: UnspentTxOut[] = updateUnspentTxOuts(
       newBlock.data,
@@ -263,6 +245,26 @@ const findBlock = (
     }
     nonce++;
   }
+};
+
+//Check block is valid or not
+const isValidNewBlock = (
+  newBlock: Block,
+  currentBlockchain: Block[]
+): boolean => {
+  const previousBlock = currentBlockchain[currentBlockchain.length - 1];
+
+  if (!isValidBlockStructure(newBlock)) {
+    return false;
+  }
+  if (previousBlock.index + 1 !== newBlock.index) {
+    return false;
+  } else if (previousBlock.hash !== newBlock.previousHash) {
+    return false;
+  } else if (!hasValidHash(newBlock)) {
+    return false;
+  }
+  return true;
 };
 
 //Create a new block with data
@@ -315,4 +317,10 @@ const sendTransaction = (
   return tx;
 };
 
-export { getUnspentTxOuts, generateNextBlock, sendTransaction, getBlockchain };
+export {
+  getUnspentTxOuts,
+  generateNextBlock,
+  sendTransaction,
+  getBlockchain,
+  isValidNewBlock,
+};

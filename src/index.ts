@@ -6,6 +6,7 @@ import {
   sendTransaction,
   generateNextBlock,
   getBlockchain,
+  isValidNewBlock,
 } from './blockchain';
 require('dotenv').config();
 
@@ -68,6 +69,11 @@ const initHttpServer = (httpPort: number) => {
 
   app.get('/blockchain', (req, res) => {
     res.status(200).send({ blockchain: getBlockchain() });
+  });
+
+  app.post('/validateBlock', (req, res) => {
+    const { block, blockchain } = req.body;
+    res.status(200).send({ isValid: isValidNewBlock(block, blockchain) });
   });
 
   app.listen(httpPort, () => {
