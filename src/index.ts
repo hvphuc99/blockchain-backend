@@ -8,6 +8,7 @@ import {
   getBlockchain,
   isValidNewBlock,
 } from './blockchain';
+import { getMyTransaction } from './transaction';
 require('dotenv').config();
 
 //Init socket
@@ -74,6 +75,12 @@ const initHttpServer = (httpPort: number) => {
   app.post('/validateBlock', (req, res) => {
     const { block, blockchain } = req.body;
     res.status(200).send({ isValid: isValidNewBlock(block, blockchain) });
+  });
+
+  app.get('/getMyTransaction', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const privateKey = authHeader.substring(7, authHeader.length);
+    res.status(200).send({ transactions: getMyTransaction(privateKey) });
   });
 
   app.listen(httpPort, () => {

@@ -1,4 +1,8 @@
 import * as CryptoJS from 'crypto-js';
+import { includes } from 'lodash';
+import { getUnspentTxOuts } from './blockchain';
+import { getTransactionPool } from './transactionPool';
+import { getPublicKey } from './wallet';
 
 class TxIn {
   public txOutId: string;
@@ -114,6 +118,25 @@ const getTransactionId = (transaction: Transaction): string => {
   return CryptoJS.SHA256(txInContent + txOutContent).toString();
 };
 
+const getMyTransaction = (privateKey: string): Transaction[] => {
+  const publicKey = getPublicKey(privateKey);
+  const unspentTxOuts = getUnspentTxOuts();
+  const txOutIndexes = unspentTxOuts
+    .filter((txOut: UnspentTxOut) => txOut.address === publicKey)
+    .map((txOut: UnspentTxOut) => txOut.txOutIndex);
+  const transactionPool = getTransactionPool();
+  const myTransaction = transactionPool.filter((transaction: Transaction) => {
+    let isOk = false;
+    transaction.txIns.map((txIn: TxIn) => {
+      if (includes(txOutIndexes, txIn.txOutIndex)) {
+        isOk = true;
+      }
+    });
+    return isOk;
+  });
+  return myTransaction;
+};
+
 export {
   Transaction,
   UnspentTxOut,
@@ -123,4 +146,5 @@ export {
   TxOut,
   findUnspentTxOut,
   toHexString,
+  getMyTransaction,
 };
