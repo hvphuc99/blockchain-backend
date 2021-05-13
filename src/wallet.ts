@@ -66,15 +66,16 @@ const findTxOutsForAmount = (
 ) => {
   let currentAmount = 0;
   const includedUnspentTxOuts = [];
+  let leftOverAmount = 0;
   for (const myUnspentTxOut of myUnspentTxOuts) {
     includedUnspentTxOuts.push(myUnspentTxOut);
     currentAmount = currentAmount + myUnspentTxOut.amount;
     if (currentAmount >= amount) {
-      const leftOverAmount = currentAmount - amount;
-      return { includedUnspentTxOuts, leftOverAmount };
+      leftOverAmount = currentAmount - amount;
+      return { includedUnspentTxOuts, leftOverAmount, currentAmount };
     }
   }
-  return { includedUnspentTxOuts, leftOverAmount: currentAmount };
+  return { includedUnspentTxOuts, leftOverAmount, currentAmount };
 };
 
 const createTxOuts = (
@@ -159,10 +160,10 @@ const createTransaction = (
     (uTxO: UnspentTxOut) => uTxO.address === publicKey
   );
 
-  const { includedUnspentTxOuts, leftOverAmount } = findTxOutsForAmount(
-    amount,
-    myUnspentTxOuts
-  );
+  const { includedUnspentTxOuts, leftOverAmount, currentAmount } =
+    findTxOutsForAmount(amount, myUnspentTxOuts);
+
+  if (currentAmount < amount) return null;
 
   const unsignedTxIns: TxIn[] = includedUnspentTxOuts.map(
     (unspentTxOut: UnspentTxOut) => {

@@ -311,6 +311,7 @@ const sendTransaction = (
   privateKey: string
 ): Transaction => {
   const tx: Transaction = createTransaction(address, amount, privateKey);
+  if (!tx) return null;
   addToTransactionPool(tx);
   //Socket broadcast transaction pool
   io.emit('newTransaction', { newTransaction: tx });

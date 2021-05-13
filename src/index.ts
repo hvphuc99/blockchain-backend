@@ -52,7 +52,7 @@ const initHttpServer = (httpPort: number) => {
     const { address, amount } = req.body;
     const tx = sendTransaction(address, amount, privateKey);
     if (!tx) {
-      res.status(500).send({ success: false });
+      res.status(201).send({ success: false });
     } else {
       res.status(201).send({ success: true });
     }
