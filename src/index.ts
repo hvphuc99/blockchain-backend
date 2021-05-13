@@ -20,7 +20,7 @@ const socketIOInit = require('socket.io')({
 });
 export const io = socketIOInit.listen(process.env.P2P_PORT || 3002);
 
-const httpPort: number = parseInt(process.env.HTTP_PORT) || 3001;
+const httpPort: number = parseInt(process.env.PORT) || 3001;
 const cors = require('cors');
 
 const initHttpServer = (httpPort: number) => {

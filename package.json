@@ -37,5 +37,7 @@
     "@types/node": "^15.0.3",
     "@types/ws": "^3.0.1",
     "tslint": "^5.5.0"
-  }
+  },
+  "worker": "node src/index.js",
+  "test": "node src/index.js"
 }
